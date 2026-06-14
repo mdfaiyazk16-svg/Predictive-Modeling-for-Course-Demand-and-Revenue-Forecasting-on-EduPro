@@ -5,12 +5,12 @@ EduPro Predictive Modeling Dashboard
 """
 
 import os
+import sys
 import joblib
 import streamlit as st
 import pandas as pd
-import numpy as np
+import sklearn
 import plotly.express as px
-
 
 # ====================================================
 # Page Config
@@ -22,7 +22,12 @@ st.set_page_config(
     layout="wide"
 )
 
+# ====================================================
+# Header
+# ====================================================
+
 st.title("📚 EduPro Predictive Modeling Dashboard")
+
 st.markdown(
     """
 Predictive Modeling for Course Demand
@@ -31,7 +36,20 @@ and Revenue Forecasting
 )
 
 # ====================================================
-# Load Files
+# Debug Info
+# ====================================================
+
+with st.expander("System Information"):
+
+    st.write("Python Version:", sys.version)
+
+    st.write(
+        "Scikit-Learn Version:",
+        sklearn.__version__
+    )
+
+# ====================================================
+# Load Dataset
 # ====================================================
 
 @st.cache_data
@@ -39,26 +57,89 @@ def load_dataset():
 
     path = "data/processed/final_ml_dataset.csv"
 
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"Dataset not found: {path}"
+        )
+
     return pd.read_csv(path)
 
+# ====================================================
+# Load Models
+# ====================================================
 
 @st.cache_resource
 def load_models():
 
-    demand_model = joblib.load(
+    demand_model_path = (
         "models/enrollment_model.pkl"
     )
 
-    revenue_model = joblib.load(
+    revenue_model_path = (
         "models/revenue_model.pkl"
+    )
+
+    if not os.path.exists(
+        demand_model_path
+    ):
+        raise FileNotFoundError(
+            f"Missing file: {demand_model_path}"
+        )
+
+    if not os.path.exists(
+        revenue_model_path
+    ):
+        raise FileNotFoundError(
+            f"Missing file: {revenue_model_path}"
+        )
+
+    demand_model = joblib.load(
+        demand_model_path
+    )
+
+    revenue_model = joblib.load(
+        revenue_model_path
     )
 
     return demand_model, revenue_model
 
+# ====================================================
+# Safe Loading
+# ====================================================
 
-df = load_dataset()
+try:
 
-demand_model, revenue_model = load_models()
+    df = load_dataset()
+
+    st.success(
+        "Dataset Loaded Successfully"
+    )
+
+except Exception as e:
+
+    st.error(
+        f"Dataset Loading Error: {e}"
+    )
+
+    st.stop()
+
+try:
+
+    demand_model, revenue_model = (
+        load_models()
+    )
+
+    st.success(
+        "Models Loaded Successfully"
+    )
+
+except Exception as e:
+
+    st.error(
+        f"Model Loading Error: {e}"
+    )
+
+    st.stop()
 
 # ====================================================
 # Sidebar
@@ -113,7 +194,9 @@ if page == "Project Overview":
 
 elif page == "Demand Prediction":
 
-    st.header("Course Demand Prediction")
+    st.header(
+        "Course Demand Prediction"
+    )
 
     course_price = st.number_input(
         "Course Price",
@@ -147,18 +230,21 @@ elif page == "Demand Prediction":
         value=5
     )
 
-    if st.button("Predict Demand"):
+    if st.button(
+        "Predict Demand"
+    ):
 
         st.warning(
             """
 Demand model accuracy is limited
 (R² ≈ 0.03).
+
 Prediction is for demonstration only.
 """
         )
 
         st.info(
-            "Demand Model Trained Successfully."
+            "Demand Model Loaded Successfully."
         )
 
 # ====================================================
@@ -167,7 +253,9 @@ Prediction is for demonstration only.
 
 elif page == "Revenue Prediction":
 
-    st.header("Revenue Forecast")
+    st.header(
+        "Revenue Forecast"
+    )
 
     sample = df.iloc[0].copy()
 
@@ -224,36 +312,67 @@ elif page == "Revenue Prediction":
         value=5
     )
 
-    if st.button("Predict Revenue"):
+    if st.button(
+        "Predict Revenue"
+    ):
 
-        sample["CourseCategory"] = course_category
-        sample["CourseType"] = course_type
-        sample["CourseLevel"] = course_level
+        try:
 
-        sample["CoursePrice"] = course_price
-        sample["CourseDuration"] = course_duration
-        sample["CourseRating"] = course_rating
+            sample[
+                "CourseCategory"
+            ] = course_category
 
-        sample["TeacherRating"] = teacher_rating
-        sample["YearsOfExperience"] = years_exp
+            sample[
+                "CourseType"
+            ] = course_type
 
-        sample = sample.drop(
-            [
-                "EnrollmentCount",
-                "TotalRevenue",
-                "CourseID",
-                "YearMonth"
-            ],
-            errors="ignore"
-        )
+            sample[
+                "CourseLevel"
+            ] = course_level
 
-        pred = revenue_model.predict(
-            pd.DataFrame([sample])
-        )[0]
+            sample[
+                "CoursePrice"
+            ] = course_price
 
-        st.success(
-            f"Predicted Revenue: ₹ {pred:,.2f}"
-        )
+            sample[
+                "CourseDuration"
+            ] = course_duration
+
+            sample[
+                "CourseRating"
+            ] = course_rating
+
+            sample[
+                "TeacherRating"
+            ] = teacher_rating
+
+            sample[
+                "YearsOfExperience"
+            ] = years_exp
+
+            sample = sample.drop(
+                [
+                    "EnrollmentCount",
+                    "TotalRevenue",
+                    "CourseID",
+                    "YearMonth"
+                ],
+                errors="ignore"
+            )
+
+            pred = revenue_model.predict(
+                pd.DataFrame([sample])
+            )[0]
+
+            st.success(
+                f"Predicted Revenue: ₹ {pred:,.2f}"
+            )
+
+        except Exception as e:
+
+            st.error(
+                f"Prediction Error: {e}"
+            )
 
 # ====================================================
 # Feature Importance
