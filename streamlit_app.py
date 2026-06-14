@@ -6,8 +6,8 @@ EduPro Predictive Modeling Dashboard
 
 import os
 import sys
-import joblib
 import streamlit as st
+import joblib
 import pandas as pd
 import sklearn
 import plotly.express as px
