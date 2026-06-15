@@ -135,9 +135,7 @@ try:
 
 except Exception as e:
 
-    st.error(
-        f"Model Loading Error: {e}"
-    )
+    st.exception(e)
 
     st.stop()
 
