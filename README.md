@@ -366,3 +366,6 @@ streamlit run streamlit_app.py
 # Conclusion
 
 This project transforms EduPro’s historical learning platform data into predictive intelligence. By forecasting enrollment demand and revenue, the platform can make informed decisions regarding course launches, pricing strategies, instructor onboarding, and resource planning. The project demonstrates the practical application of Machine Learning in educational business analytics and strategic planning.
+
+# Streamlit Deploy link
+https://edupro-predictive-modeling.streamlit.app/
